@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>주문 내역</title>
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background-color:#ccc;
+            color: black;
+            padding: 5px 20px;
+        }
+
+        h1 {
+            margin: 20px 0;
+            font-size: 24px;
+        }
+
+        footer {
+            display: flex;
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            text-align: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footword{
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            width: 50px;
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        button {
+            flex: 0 0 auto;
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #fff;
+            line-height: 18px;
+            vertical-align: top;
+            background-color: #4CAF50;
+            font-weight: normal;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script th:inline="javascript">
+        window.addEventListener('DOMContentLoaded', function() {
+            var uiMenu = document.querySelector('.ui-menu');
+            fetch('/menu')
+                .then(function(response) {
+                    return response.text();
+                })
+                .then(function(html) {
+                    uiMenu.innerHTML = html;
+                    var scripts = uiMenu.getElementsByClassName("runNow");
+                    for (var i = 0; i < scripts.length; i++) {
+                        eval(scripts[i].innerHTML);
+                    }
+                })
+                .catch(function(error) {
+                    console.log('뷰를 가져오는 동안 오류가 발생했습니다:', error);
+                });
+        });
+
+        async function logout() {
+            try {
+                const token = getCookie("token");
+                const response = await fetch('/user/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': "Bearer " + token
+                    }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert("로그아웃에 성공했습니다!");
+                    console.log(location.href);
+                    location.href = "/";
+                } else {
+                    console.log(result);
+                    alert("로그아웃에 실패했습니다.\n잠시 후 다시 시도해주세요.");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function getCookie(name) {
+            const cookieName = name + "=";
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.indexOf(cookieName) === 0) {
+                    return cookie.substring(cookieName.length, cookie.length);
+                }
+            }
+            return null;
+        }
+    </script>
+</head>
+<body>
+<div class="ui-menu"></div>
+
+<header> <h1>주문 상세 정보</h1> </header>
+<h3>최근 3년 이내의 주문 내역만을 보여줍니다</h3>
+<div id="order-list">
+
+</div>
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+<script th:inline="javascript">
+    const findOrderCheck = () => {
+        const token = getCookie('token');
+        $.ajax({
+            // 요청방식: post, 요청주소: /comment/update, 요청데이터: 작성자, 작성내용, 게시글번호
+            type: "get",
+            url: "/product_comment/orderCheck",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token
+            },
+            success: function (res) {
+                console.log("요청승인", res);
+                let orders = res.response;
+                let output = "";
+                if (orders[0].id != null) {
+                    output += "<div>";
+                    output += "<table class='table table-striped' id='orderTable'>";
+                    output += "<tr>";
+                    output += "<th>" + "주문 번호" + "</th>";
+                    output += "<th>" + "주문 일자 및 시간" + "</th>";
+                    output += "<th>" + "상품명" + "</th>";
+                    output += "<th>" + "옵션명" + "</th>";
+                    output += "<th>" + "가격" + "</th>";
+                    output += "<th>" + "수량" + "</th>";
+                    output += "<th>" + "상품후기" + "</th>";
+                    output += "<th>" + "반품" + "</th>";
+                    output += "</tr>";
+
+                    for (let i in orders){
+                        output += "<tr>";
+                        output += "<td>" + orders[i].tid + "</td>";
+
+                        output += "<td>" + orders[i].orderDate.substring(0,10) + " ";
+                        output += orders[i].orderDate.substring(11,20);
+                        output += "</td>";
+
+                        output += "<td>" + orders[i].productName + "</td>";
+                        output += "<td>" + orders[i].optionName + "</td>";
+                        output += "<td>" + orders[i].price + "</td>";
+                        output += "<td>" + orders[i].quantity + "</td>";
+
+                        output += "<td>";
+                        if (orders[i].commentId !== null) {
+                            output += "<button class='update' data-id='" + orders[i].commentId + "'>수정</button>";
+                            output += "<button class='delete' data-id='" + orders[i].commentId + "'>삭제</button>";
+                        } else {
+                            const orderId = "/product_comment/save/" + orders[i].id;
+                            output += "<button class='create' data-id='" + orders[i].id + "' onclick=''>작성</button>";
+                        }
+                        output += "</td>";
+                        output += "<td>";
+                        if (orders[i].tId !== null) {
+                            output += "<button class='cancel' data-id='" + orders[i].tid + "' onclick=''>반품</button>";
+                        }
+                        output += "</td>";
+                        output += "</tr>";
+                    }
+                    output += "</table>";
+                    output += "</div>";
+                }
+                document.getElementById('order-list').innerHTML = output;
+
+                const createButton = document.querySelectorAll('.create');
+                const updateButton = document.querySelectorAll('.update');
+                const deleteButton = document.querySelectorAll('.delete');
+                const returnButton = document.querySelectorAll('.cancel');
+
+                returnButton.forEach(button => {
+                    button.addEventListener("click", function() {
+                        const id = this.dataset.id;
+                        returnorder(id);
+                    });
+                });
+
+                createButton.forEach(button => {
+                    button.addEventListener("click", function() {
+                        const id = this.dataset.id;
+                        createComment(id);
+                    });
+                });
+
+                updateButton.forEach(button => {
+                    button.addEventListener("click", function() {
+                        const id = this.dataset.id;
+                        updateComment(id);
+                    });
+                });
+
+                deleteButton.forEach(button => {
+                    button.addEventListener("click", function() {
+                        const id = this.dataset.id;
+                        deleteComment(id);
+                    });
+                });
+            },
+            error: function (err) {
+                console.log("화면 이동 실패", err);
+                console.log(location.href);
+                location.href = "/";
+            }
+        });
+    }
+
+    findOrderCheck();
+
+    function getCookie(name) {
+        const cookieName = name + "=";
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.indexOf(cookieName) === 0) {
+                return cookie.substring(cookieName.length, cookie.length);
+            }
+        }
+        return null;
+    }
+
+    const createComment = (id) => {
+        location.href = "/product_comment/save/" + id;
+    }
+
+    const updateComment = (id) => {
+        location.href = "/product_comment/update/" + id;
+    }
+    const returnorder = (id) => {
+        location.href = "/returnorder/" + id;
+    }
+    const deleteComment = (id) => {
+        const token = getCookie('token');
+        $.ajax({
+            type: "post",
+            url: "/product_comment/delete/" + id,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token
+            },
+            success: function (res) {
+                console.log("요청성공", res);
+                findOrderCheck();
+            },
+            error: function (err) {
+                console.log("요청실패", err);
+                alert("삭제 실패");
+            }
+        });
+    }
+</script>
+</body>
+</html>

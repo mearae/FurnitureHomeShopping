@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>save</title>
+    <style>
+        /* 여기에 CSS 스타일을 추가해주세요 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color:#ccc;
+            color: black;
+            padding: 20px;
+            text-align: center;
+        }
+
+        footer {
+            display: flex;
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            text-align: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footword{
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        form {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        h2 {
+            margin: 0 0 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .title_area {
+            margin-bottom: 5px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+        }
+
+        .option_area {
+            margin-bottom: 10px;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 95%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: vertical;
+        }
+
+        .button_upload {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        #selected-files {
+            margin-top: 10px;
+        }
+
+        .file-upload {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script>
+        // JavaScript 코드는 그대로 유지됩니다.
+        function updateSelectedFiles(event) {
+            var files = event.target.files;
+            var selectedFilesDiv = document.getElementById("selected-files");
+            selectedFilesDiv.innerHTML = "";
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                var fileName = file.name;
+                var fileSize = (file.size / 1024).toFixed(2) + "KB";
+                var fileDiv = document.createElement("div");
+                fileDiv.textContent = fileName + " (" + fileSize + ")";
+                selectedFilesDiv.appendChild(fileDiv);
+            }
+        }
+
+        function submitForm() {
+            var form = document.getElementById("boardForm");
+            form.submit();
+        }
+    </script>
+</head>
+<body>
+<header>
+    <h1>공지사항 작성</h1>
+</header>
+
+<form id="boardForm" enctype="multipart/form-data">
+    <h2>게시글 작성</h2>
+    <div class="form-group">
+        <div class="title_area">
+            <label>제목</label>
+        </div>
+        <div class="option_area">
+            <input type="text" id="title" name="title" required>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="title_area">
+            <label>내용</label>
+        </div>
+        <div class="option_area">
+            <textarea name="contents" id="contents" cols="30" rows="10"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="title_area">
+            <label>첨부 파일</label>
+        </div>
+        <div class="option_area">
+            <label class="button_upload">
+                <span class="blind"></span>
+                <input class="blind" type="file" id="files" name="files" multiple onchange="updateSelectedFiles(event)">
+            </label>
+            <div id="selected-files"></div>
+        </div>
+    </div>
+    <button type="button" class="file-upload" onclick="submitForm()">글 작성</button>
+</form>
+
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+
+<script>
+    function updateSelectedFiles(event) {
+        const files = event.target.files;
+        const selectedFilesContainer = document.getElementById('selected-files');
+        selectedFilesContainer.innerHTML = '';
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const fileName = file.name;
+            const fileItem = document.createElement('div');
+            fileItem.textContent = fileName;
+            selectedFilesContainer.appendChild(fileItem);
+        }
+    }
+
+    function getCookie(name) {
+        const cookieName = name + "=";
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.indexOf(cookieName) === 0) {
+                return cookie.substring(cookieName.length, cookie.length);
+            }
+        }
+        return null;
+    }
+
+    async function submitForm() {
+        const form = document.getElementById('boardForm');
+        const formData = new FormData(form);
+        const token = getCookie('token');
+
+        for (let entry of formData.entries()) {
+            console.log(entry[0] + ': ' + entry[1]);
+        }
+
+
+        await fetch('/board/save',{
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        }).then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error("서버 오류");
+            }
+        }).then(data => {
+            if (data.success) {
+                console.log(data);
+                alert("게시글이 성공적으로 저장되었습니다.");
+                location.href="/board/paging";
+            } else {
+                console.log(data.error);
+                alert("게시물 생성 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.");
+            }
+        }).catch(error => {
+            console.error(error);
+        });
+    }
+</script>
+
+</body>
+</html>

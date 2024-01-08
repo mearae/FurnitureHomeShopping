@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>상품 후기 수정</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background-color:#ccc;
+            color: black;
+            padding: 5px 20px;
+        }
+
+        h1 {
+            margin: 20px 0;
+            font-size: 24px;
+        }
+
+        footer {
+            display: flex;
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            text-align: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footword{
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        form {
+            margin: 50px auto;
+            display: flex;
+            flex-direction: column;
+            width: fit-content;
+            height: 100%;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            flex-wrap: nowrap;
+            align-content: space-around;
+            justify-content: space-between;
+            align-items: stretch;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            box-sizing: border-box;
+            padding: 9px 0 9px 4px;
+            width: 100%;
+            font-size: 14px;
+            border: none;
+            border-bottom: 1px solid rgba(200, 200, 204, 0.9);
+        }
+
+        input[type="text"]:focus {
+            border-bottom: 1px solid rgba(24, 157, 255, 90%);
+            outline: none;
+        }
+
+        textarea {
+            width: 100%;
+            font-size: 14px; /* 글자 크기 수정 */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+        }
+
+        input[type="file"] {
+            display: inline-block;
+            width: 95%;
+            padding: 10px;
+            border-radius: 3px;
+        }
+
+        .blind {
+            position: absolute;
+            clip: rect(0, 0, 0, 0);
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            overflow: hidden;
+        }
+
+        .button_upload {
+            flex: 0 0 auto;
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #fff;
+            line-height: 25px;
+            vertical-align: top;
+            background-color: #4CAF50;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .title_area {
+            width: 100px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .option_area {
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        input[type="submit"] {
+            flex: 0 0 auto;
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #fff;
+            line-height: 18px;
+            vertical-align: top;
+            background-color: #4CAF50;
+            border: none;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        .btn {
+            flex: 0 0 auto;
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 5px;
+            color: #fff;
+            line-height: 25px;
+            width: 100px;
+            vertical-align: top;
+            background-color: #4CAF50;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .rating-stars {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+        .rating-stars input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        .max-size-image {
+            max-width: 200px; /* 최대 가로 크기 */
+            max-height: 200px; /* 최대 세로 크기 */
+        }
+
+        #selected-files {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            width: fit-content;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+</head>
+<body>
+<header><h1>상품 후기 수정</h1></header>
+<form id="updateForm" enctype="multipart/form-data">
+    <h2>상품 후기 수정</h2>
+    <input type="hidden" name="id" th:value="${comment.id}">
+    <div class="form-group">
+        <div class="title_area">
+            <label>별점</label>
+        </div>
+        <div class="option_area">
+            <div class="rating-stars">
+                <input type="radio" id="star1" name="star" value="1" /> 1
+                <label for="star1" title="1점"></label>
+                <input type="radio" id="star2" name="star" value="2" /> 2
+                <label for="star2" title="2점"></label>
+                <input type="radio" id="star3" name="star" value="3" /> 3
+                <label for="star3" title="3점"></label>
+                <input type="radio" id="star4" name="star" value="4" /> 4
+                <label for="star4" title="4점"></label>
+                <input type="radio" id="star5" name="star" value="5" checked/> 5
+                <label for="star5" title="5점"></label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="title_area">
+            <label>내용</label>
+        </div>
+        <div class="option_area">
+            <textarea name="contents" id="contents" cols="30" rows="10" th:text="${comment.getContents}"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="title_area">
+            <label>첨부 파일</label>
+        </div>
+        <div class="option_area">
+            <label class="button_upload">파일 선택
+                <span class="blind"></span>
+                <input class="blind" type="file" id="files" name="files" multiple onchange="updateSelectedFiles(event)">
+            </label>
+            <div id="selected-files"></div>
+        </div>
+    </div>
+    <button type="button" class="btn button_upload" onclick="submitForm()">수정</button>
+    <footer>
+        <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+    </footer>
+</form>
+
+
+
+<script th:inline="javascript">
+    show();
+    function show() {
+        console.log([[${comment}]]);
+    }
+
+    function updateSelectedFiles(event) {
+        var selectedFilesContainer = document.querySelector("#selected-files");
+        selectedFilesContainer.innerHTML = "";
+        for (var image of event.target.files) {
+            var reader = new FileReader();
+
+            reader.onload = function(event) {
+                var img = document.createElement("img");
+                img.setAttribute("src", event.target.result);
+                img.classList.add("max-size-image");
+
+                document.querySelector("#selected-files").appendChild(img);
+            };
+
+            reader.readAsDataURL(image);
+        }
+    }
+
+    const ratingStars = document.querySelectorAll('.rating-stars input[type="radio"]');
+    ratingStars.forEach(function(star) {
+        star.addEventListener("change", function() {
+            const selectedRating = this.value;
+        });
+    });
+
+    async function submitForm() {
+        const form = document.getElementById('updateForm');
+        const formData = new FormData(form);
+        const token = getCookie('token');
+
+        for (let entry of formData.entries()) {
+            console.log(entry[0] + ': ' + entry[1]);
+        }
+
+        await fetch('/product_comment/update',{
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        }).then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error("서버 오류");
+            }
+        }).then(data => {
+            if (data.success) {
+                console.log(data);
+                alert("상품 후기가 성공적으로 수정되었습니다.");
+                location.href="/";
+            } else {
+                console.log(data.error);
+                alert("상품 후기 수정 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.");
+            }
+        }).catch(error => {
+            console.error(error);
+        });
+    }
+
+    function getCookie(name) {
+        var cookieName = name + "=";
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.indexOf(cookieName) === 0) {
+                return cookie.substring(cookieName.length, cookie.length);
+            }
+        }
+        return null;
+    }
+
+</script>
+</body>
+</html>

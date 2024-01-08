@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nicepay Spring Boot</title>
+    <meta httpEquiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 999;
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <h1>주문 취소</h1>
+</header>
+
+<form method="POST" action="/v1/cancelAuth">
+    <label for="tid">주문 결제번호</label>
+    <input type="text" id="tid" name="tid" th:value="${order.getTid()}" required>
+
+    <label for="optionName">주문 상품</label>
+    <input type="text" id="optionName" name="optionName" th:value="${order.getOptionName()}" required>
+
+    <label for="amount">환불 금액</label>
+    <input type="text" id="amount" name="amount" th:value="${totalPrice}" required>
+
+    <label for="reason">취소 사유</label>
+    <input type="text" id="reason" name="reason" required>
+
+    <input type="hidden" id="orderId" name="orderId" th:value="${order.getOptionId()}">
+
+    <input type="submit" value="취소 요청">
+</form>
+
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>상품 상세 페이지</title>
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+    <style>
+        /* 전체 페이지 스타일 */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* 헤더 스타일 */
+        header {
+            background-color: #f2f2f2;
+            color: #333;
+            padding: 10px 20px;
+        }
+
+        h1 {
+            margin: 20px 0;
+            font-size: 24px;
+        }
+
+        /* 푸터 스타일 */
+        footer {
+            display: flex;
+            background-color: #f2f2f2;
+            padding: 10px 20px;
+            text-align: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footword {
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 테이블 스타일 */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        /* 이미지 스타일 */
+        .max-size-image {
+            max-width: 100px;
+            max-height: 100px;
+        }
+
+        .image-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        #img-box {
+            margin-right: 10px;
+        }
+
+        /* 별점 컨테이너 스타일 */
+        .star-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        /* 추가적인 스타일링 */
+        h3 {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+
+        p {
+            margin: 5px 0;
+        }
+
+        button {
+            flex: 0 0 auto;
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #fff;
+            line-height: 18px;
+            vertical-align: top;
+            background-color: #4CAF50;
+            font-weight: normal;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script th:inline="javascript">
+        window.addEventListener('DOMContentLoaded', function() {
+            var uiMenu = document.querySelector('.ui-menu');
+            fetch('/menu')
+                .then(function(response) {
+                    return response.text();
+                })
+                .then(function(html) {
+                    uiMenu.innerHTML = html;
+                    var scripts = uiMenu.getElementsByClassName("runNow");
+                    for (var i = 0; i < scripts.length; i++) {
+                        eval(scripts[i].innerHTML);
+                    }
+                })
+                .catch(function(error) {
+                    console.log('뷰를 가져오는 동안 오류가 발생했습니다:', error);
+                });
+        });
+
+        async function logout() {
+            try {
+                const token = getCookie("token");
+                const response = await fetch('/user/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': "Bearer " + token
+                    }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert("로그아웃에 성공했습니다!");
+                    console.log(location.href);
+                    location.href = "/";
+                } else {
+                    console.log(result);
+                    alert("로그아웃에 실패했습니다.\n잠시 후 다시 시도해주세요.");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function getCookie(name) {
+            const cookieName = name + "=";
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.indexOf(cookieName) === 0) {
+                    return cookie.substring(cookieName.length, cookie.length);
+                }
+            }
+            return null;
+        }
+    </script>
+</head>
+
+<body>
+<div class="ui-menu"></div>
+<header>
+    <h1 th:text="${product.productName}"></h1>
+</header>
+
+<div th:if="${product != null}">
+    <!-- 상품 정보 섹션 -->
+    <div>
+        <h3 th:text="${product.productName}">상품명</h3>
+        <p>가격: <span id="basePrice" th:text="${product.price}">상품 가격</span>원</p>
+        <p>배송비: <span id="deliveryFee" th:text="${product.deliveryFee}">배송비</span>원</p>
+
+        <h3>상품 이미지</h3>
+        <div class="image-container" th:unless="${product.files[0].id == null}">
+            <!-- Thymeleaf를 사용하여 이미지 URL 구성 -->
+            <div id="img-box" th:each="file: ${product.files}">
+                <img class="productImg max-size-image" th:src="'/product/image/' + ${file.id}" alt="상품 이미지">
+            </div>
+        </div>
+        <!-- 옵션 선택 섹션 -->
+        <div th:unless="${product.optionList.isEmpty()}">
+            <h3>옵션 선택</h3>
+            <select id="optionSelect" name="optionSelect" onchange="updateTotalPrice()">
+                <option selected value="">옵션 선택</option>
+                <!-- 기본 옵션 추가 -->
+                <option th:each="option : ${product.optionList}" th:value="${option.id}" th:text="${option.optionName}" th:data-price="${option.price}" th:data-stock="${option.stockQuantity}" th:data-product-id="${option.productId}">
+                    <!-- productId 데이터 속성 추가 -->
+                    옵션 명
+                </option>
+            </select>
+        </div>
+        <!-- 수량 선택 섹션 -->
+        <div>
+            <h3>수량 선택</h3>
+            <input type="number" id="quantitySelect" name="quantitySelect" min="1" max="" value="1" onchange="updateTotalPrice()">
+        </div>
+        <div id="totalPriceSection">
+            <h3>총 가격: <span id="totalPrice"></span>원</h3>
+        </div>
+        <div>
+            <button type="submit" id="addCartButton" onclick="addCart()">장바구니 추가</button>
+        </div>
+        <p th:text="${product.description}">상품 설명</p>
+        <!-- 상품 설명을 장바구니 추가 버튼 밑으로 옮김 -->
+    </div>
+</div>
+
+<h3>상품 후기</h3>
+<div class="star-container">
+    <h3>평균 별점 :</h3>
+    <h3>
+        <div id="all-star" th:if="${comments != null}"></div>
+        <div th:unless="${comments != null}">0.0</div>
+    </h3>
+</div>
+<div th:if="${comments != null}">
+    <div>
+        <table>
+            <tr>
+                <th>작성자</th>
+                <th>별점</th>
+                <th>옵션명</th>
+                <th>내용</th>
+                <th>작성시간</th>
+                <th>사진</th>
+            </tr>
+            <tr th:each="comment: ${comments}">
+                <td th:text="${comment.getWriter()}"></td>
+                <td th:text="${comment.getStar()}"></td>
+                <td th:text="${comment.getOptionName()}"></td>
+                <td th:text="${comment.getContents()}"></td>
+                <td th:text="*{#temporals.format(comment.getCreateTime(), 'yyyy.MM.dd hh:mm:ss')}"></td>
+                <td th:if="${comment.files[0].id != null}">
+                    <div class="image-container">
+                        <img class="productImg max-size-image" th:each="file: ${comment.getFiles()}" th:src="'/product_comment/image/' + ${file.id}" alt="상품 이미지">
+                    </div>
+                </td>
+                <td th:unless="${comment.files[0].id != null}"></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+
+<script th:inline="javascript">
+// 총 가격 업데이트 함수 (옵션, 수량, 그리고 배송비 선택에 따라 총 가격을 계산)
+function updateTotalPrice() {
+    var optionSelect = document.getElementById('optionSelect');
+    if (optionSelect) {
+        var selectedOption = optionSelect.options[optionSelect.selectedIndex];
+        var optionPrice = selectedOption.getAttribute('data-price');
+        var basePrice = document.getElementById('basePrice').textContent; // 상품 기본 가격을 HTML에서 가져옵니다.
+        var deliveryFee = document.getElementById('deliveryFee').textContent; // 배송비를 HTML에서 가져옵니다.
+        var quantity = document.getElementById('quantitySelect').value; // 선택된 수량을 가져옵니다.
+
+        var totalPrice = (parseInt(basePrice, 10) + parseInt(optionPrice || 0, 10)) * parseInt(quantity, 10) + parseInt(deliveryFee, 10);
+        document.getElementById('totalPrice').innerText = totalPrice; // '원' 텍스트는 HTML에 있으므로 여기에는 추가하지 않음
+
+        var optionStock = selectedOption.getAttribute('data-stock'); // 옵션의 재고 수량을 가져옵니다.
+        let maxValue = Math.min(99, optionStock); // 재고 수량과 99 중 작은 값 선택
+        var inputElement = document.getElementById("quantitySelect");
+        inputElement.setAttribute("max", maxValue.toString()); // 수량 선택의 최댓값을 설정합니다.
+    }
+}
+
+// 문서 로드 후 총 가격을 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    updateTotalPrice();
+    averageStar();
+    show();
+});
+
+function show(){
+    console.log([[${product}]]);
+    console.log([[${comments}]]);
+}
+
+// 장바구니 추가 함수
+async function addCart() {
+    const optionSelect = document.getElementById('optionSelect');
+    const optionId = (optionSelect.options[optionSelect.selectedIndex]).value; // 선택된 옵션의 ID를 가져옵니다.
+    const quantity = document.getElementById('quantitySelect').value; // 선택된 수량을 가져옵니다.
+    const reqData = {
+        optionId: optionId,
+        quantity: quantity // 선택된 수량을 서버에 전달합니다.
+    };
+    // 서버에 장바구니 추가 요청을 보냅니다.
+    try {
+        const token = getCookie("token");
+        const response = await fetch('/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': "Bearer " + token
+            },
+            body: JSON.stringify(reqData)
+        });
+        const result = await response.json();
+        if (result.success) {
+            console.log(result);
+            alert('장바구니에 상품이 추가되었습니다.'); // 성공 메시지를 보여줍니다.
+        } else {
+            console.log(result.error);
+            alert(result.error.message); // 실패 메시지를 보여줍니다.
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function getCookie(name) {
+    const cookieName = name + "=";
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.indexOf(cookieName) === 0) {
+            return cookie.substring(cookieName.length, cookie.length);
+        }
+    }
+    return null;
+}
+
+function averageStar() {
+    const reviews = document.getElementById('all-star');
+    if (reviews) {
+        const comments = [[${comments}]];
+        let stars = 0.0;
+        let cnt = comments.length;
+        for (let i in comments) {
+            stars += Number(comments[i].star);
+        }
+        const temp = (stars / cnt).toFixed(2);
+        console.log(stars);
+        reviews.textContent = temp.toString();
+    }
+}
+</script>
+
+</body>
+
+</html>

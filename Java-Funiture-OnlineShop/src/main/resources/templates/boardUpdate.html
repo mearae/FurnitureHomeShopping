@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 수정</title>
+    <style>
+        /* 스타일을 적용할 CSS 코드를 추가합니다 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color:#ccc;
+            color: black;
+            padding: 20px;
+            text-align: center;
+        }
+
+        footer {
+            display: flex;
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            text-align: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footword{
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        form {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 95%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .button-style {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+    </style>
+    <script>
+        /* 자바스크립트 코드는 그대로 유지합니다 */
+        const fileInput = document.querySelector("input[type='file']");
+
+        function deleteAndRefresh(id) {
+            fetch('/board/deleteByBoardFile/' + id, {
+                method: 'POST'
+            }).then(function() {
+                location.reload();
+            });
+        }
+
+        function getCookie(name) {
+            var cookieName = name + "=";
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.indexOf(cookieName) === 0) {
+                    return cookie.substring(cookieName.length, cookie.length);
+                }
+            }
+            return null;
+        }
+    </script>
+</head>
+<body>
+<header>
+    <h1>게시글 수정</h1>
+</header>
+
+<form action="/board/update" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="id" th:value="${board.id}">
+
+    <label for="title">제목:</label>
+    <input type="text" name="title" id="title" th:value="${board.title}">
+
+    <label for="contents">내용:</label>
+    <textarea name="contents" id="contents" cols="30" rows="5" th:text="${board.contents}"></textarea>
+
+    <label>기존 파일:</label>
+    <ul>
+        <li th:each="file : ${existingFiles}">
+            <span th:text="${file.fileName}"></span>
+            <button class="delete-btn" onclick="deleteAndRefresh(${file.id})">삭제</button>
+        </li>
+    </ul>
+
+    <label for="fileInput">파일 첨부:</label>
+    <input type="file" name="files" id="fileInput" multiple>
+
+    <input type="submit" value="수정" class="button-style">
+</form>
+
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>카테고리별 상품리스트</title>
+    <style>
+        /* 기존 CSS 코드 유지 */
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        /* 전체 페이지 스타일 */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* 헤더 스타일 */
+        header {
+            background-color: #f2f2f2;
+            color: #333;
+            padding: 10px 20px;
+        }
+
+        h1 {
+            margin: 20px 0;
+            font-size: 24px;
+        }
+
+        /* 푸터 스타일 */
+        footer {
+            display: flex;
+            background-color: #f2f2f2;
+            padding: 10px 20px;
+            text-align: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footword {
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 테이블 스타일 */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        /* 이미지 스타일 */
+        .max-size-image {
+            max-width: 100px;
+            max-height: 100px;
+        }
+
+        .image-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        #img-box {
+            margin-right: 10px;
+        }
+
+        /* 별점 컨테이너 스타일 */
+        .star-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        /* 추가적인 스타일링 */
+        h3 {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+
+        p {
+            margin: 5px 0;
+        }
+
+        button {
+            flex: 0 0 auto;
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #fff;
+            line-height: 18px;
+            vertical-align: top;
+            background-color: #4CAF50;
+            font-weight: normal;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script th:inline="javascript">
+        window.addEventListener('DOMContentLoaded', function() {
+            var uiMenu = document.querySelector('.ui-menu');
+            fetch('/menu')
+                .then(function(response) {
+                    return response.text();
+                })
+                .then(function(html) {
+                    uiMenu.innerHTML = html;
+                    var scripts = uiMenu.getElementsByClassName("runNow");
+                    for (var i = 0; i < scripts.length; i++) {
+                        eval(scripts[i].innerHTML);
+                    }
+                })
+                .catch(function(error) {
+                    console.log('뷰를 가져오는 동안 오류가 발생했습니다:', error);
+                });
+        });
+
+        async function logout() {
+            try {
+                const token = getCookie("token");
+                const response = await fetch('/user/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': "Bearer " + token
+                    }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert("로그아웃에 성공했습니다!");
+                    console.log(location.href);
+                    location.href = "/";
+                } else {
+                    console.log(result);
+                    alert("로그아웃에 실패했습니다.\n잠시 후 다시 시도해주세요.");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function getCookie(name) {
+            const cookieName = name + "=";
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.indexOf(cookieName) === 0) {
+                    return cookie.substring(cookieName.length, cookie.length);
+                }
+            }
+            return null;
+        }
+    </script>
+
+</head>
+<body>
+<div class="ui-menu"></div>
+
+<header> <h1>카테고리별 상품리스트</h1> </header>
+<section>
+    <div class="section">
+        <!-- boardList가 존재하고 비어있지 않은 경우 -->
+        <table>
+            <tr>
+                <th>번호</th>
+                <th>상품 사진</th>
+                <th>상품 이름</th>
+                <th>상품 가격</th>
+            </tr>
+            <span th:if="${productList.totalPages == 0}">
+                <tr>
+                    <td colspan="4">
+                        <div>등록된 상품이 없습니다.</div>
+                    </td>
+                </tr>
+            </span>
+            <span th:unless="${productList.totalPages == 0}">
+                <tr th:each="product: ${productList}">
+                    <td th:text="${product.getId()}"></td>
+                    <td th:if="${product.file.getId() != null}"><img class="max-size-image" th:if="${product.file}" th:src="@{'/product/image/' + ${product.file.id}}" alt="Product image"></td>
+                    <td th:unless="${product.file.getId() != null}"></td>
+                    <td><a th:href="@{/product/show/{id}(id=${product.id}, page=${productList.number + 1})}" th:text="${product.getProductName()}"></a></td>
+                    <td th:text="${product.getPrice()}"></td>
+                </tr>
+            </span>
+        </table>
+
+        <div class="paging-buttons">
+            <span th:if="${productList.first}">
+                <span class="active" th:text="처음"></span>
+                <span class="active" th:text="이전"></span>
+            </span>
+            <span th:unless="${productList.first}">
+                <a th:href="@{/product/paging(page=1)}">처음</a>
+                <a th:href="@{/product/paging(page=${productList.number})}">이전</a>
+            </span>
+
+            <span class="paging-links" th:each="page: ${#numbers.sequence(startPage, endPage)}">
+                <!-- 현재페이지는 링크 없이 숫자만 -->
+                <span th:if="${page == productList.number + 1}" class="active" th:text="${page}"></span>
+                <!-- 현재페이지 번호가 아닌 다른 페이지번호에는 링크를 보여줌 -->
+                <span th:unless="${productList.totalPages == 0}">
+                <span th:unless="${page == productList.number + 1}">
+                    <a th:href="@{/product/paging(page=${page})}" th:text="${page}"></a>
+                </span>
+                </span>
+            </span>
+
+            <span th:if="${productList.last}">
+                <span class="active" th:text="다음"></span>
+                <span class="active" th:text="마지막"></span>
+            </span>
+            <span th:unless="${productList.last}">
+                <!-- 다음 링크 활성화 비활성화   사용자: 2페이지, getNumber: 1, 3페이지-->
+                <a th:href="@{/product/paging(page=${productList.number + 2})}">다음</a>
+                <!-- 마지막 페이지로 이동 -->
+                <a th:href="@{/product/paging(page=${productList.totalPages})}">마지막</a>
+            </span>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+</body>
+</html>

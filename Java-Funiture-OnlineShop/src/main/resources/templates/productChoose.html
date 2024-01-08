@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>수정할 상품 선택</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        select, button {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+<header> <h1>수정할 상품 선택</h1> </header>
+
+<form id="productForm">
+    <label for="selectedCategory1">대분류 카테고리 선택:</label>
+    <select id="selectedCategory1" name="superCategory_id" onchange="callSons('selectedCategory1','selectedCategory2')" required>
+        <option value="0">없음</option>
+        <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.categoryName}"></option>
+    </select><br>
+
+    <!-- 카테고리 목록 콤보 박스 -->
+    <label for="selectedCategory2">중분류 카테고리 선택:</label>
+    <select id="selectedCategory2" name="superCategory_id" onchange="callSons('selectedCategory2','selectedCategory3')" required>
+        <option value="0">없음</option>
+    </select><br>
+
+    <!-- 카테고리 목록 콤보 박스 -->
+    <label for="selectedCategory3">소분류 카테고리 선택:</label>
+    <select id="selectedCategory3" name="superCategory_id" onchange="setProduct()" required>
+        <option value="0">없음</option>
+    </select><br>
+
+    <label for="productName">상품명:</label><br>
+    <select id="productName" name="productName" required>
+        <option value="0">없음</option>
+    </select><br>
+
+    <button type="button" id="updateProductButton" onclick="sendProduct()">상품 수정하기</button>
+    <button type="button" id="deleteProductButton" onclick="deleteProduct()">상품 삭제하기</button>
+</form>
+
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+<script th:inline="javascript">
+    async function deleteProduct() {
+        const selectElement = document.getElementById("productName");
+        let selectedName = selectElement.options[selectElement.selectedIndex].value;
+        if (selectedName === "없음") {selectedName = ""}
+        const id = selectedName;
+        const token = getCookie("token");
+
+        if (id !== "") {
+            try {
+                const response = await fetch('/product/delete/' + id, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(result.response);
+                } else {
+                    console.log(result);
+                    alert("없는 상품을 선택");
+                    console.log(location.href);
+                    location.href="/adminPage";
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    }
+
+    // 상품 저장 함수
+    async function sendProduct() {
+        const selectElement = document.getElementById("productName");
+        let selectedName = selectElement.options[selectElement.selectedIndex].value;
+        if (selectedName === "없음") {selectedName = ""}
+        const id  = selectedName;
+
+        console.log(location.href);
+        location.href = '/product/update/' + id;
+    }
+
+    async function setProduct() {
+        const selectElement = document.getElementById("selectedCategory3");
+        let selectedName = selectElement.options[selectElement.selectedIndex].value;
+        if (selectedName === "없음") {selectedName = ""}
+        const categoryId  = selectedName;
+        const productOption = document.getElementById('productName');
+
+        if (categoryId !== "") {
+            try {
+                const response = await fetch('/product/category/' + categoryId, {
+                    method: 'GET'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(result.response);
+                    productOption.innerHTML = '<option value="0">없음</option>';
+                    const products = result.response;
+                    for (let i in products) {
+                        const product = products[i];
+                        console.log(product);
+                        productOption.innerHTML += '<option value="' + product.id + '">' + product.productName + '</option>';
+                    }
+                } else {
+                    console.log(result);
+                    alert("없는 상품을 선택");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    }
+
+    function getCookie(name) {
+        var cookieName = name + "=";
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.indexOf(cookieName) === 0) {
+                return cookie.substring(cookieName.length, cookie.length);
+            }
+        }
+        return null;
+    }
+
+    //-------------------카테고리-----------------//
+
+    async function callSons(tag1, tag2) {
+        const option1 = document.getElementById(tag1);
+        const option2 = document.getElementById(tag2);
+        const selectedOption = option1.value;
+
+        if (selectedOption !== "0") {
+            // AJAX 요청 보내기
+            try{
+                const response = await fetch('/category/son/' + selectedOption, {
+                    method: 'GET'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(result.response);
+                    option2.innerHTML = '<option value="0">없음</option>';
+                    const sons = result.response;
+                    for (const par in sons) {
+                        const sub = sons[par];
+                        console.log(sub);
+                        option2.innerHTML += '<option value="' + sub.id + '">' + sub.categoryName + '</option>';
+                    }
+                } else {
+                    console.log(result);
+                    alert("없는 카테고리를 선택");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        } else {
+            setInputValue(tag1);
+            document.getElementById("selectedCategory3").innerHTML = '<option value="0">없음</option>';
+            if (tag1 === "selectedCategory1") {
+                document.getElementById("selectedCategory2").innerHTML = '<option value="0">없음</option>';
+            }
+        }
+    }
+
+</script>
+</body>
+</html>

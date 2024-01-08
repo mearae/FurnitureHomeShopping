@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>가구홈페이지</title>
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+    <style>
+        /* 스타일 시트를 이용하여 홈페이지를 꾸미기 */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background-color:#ccc;
+            color: black;
+            padding: 5px 20px;
+        }
+
+        h1 {
+            margin: 20px 0;
+            font-size: 24px;
+        }
+
+        footer {
+            display: flex;
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            text-align: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footword{
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        button {
+            flex: 0 0 auto;
+            margin-right: 10px;
+            padding: 4px 14px;
+            display: inline-block;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: normal;
+            color: #333;
+            cursor: pointer;
+            line-height: 25px;
+            transition: background-color 0.3s;
+            vertical-align: top;
+        }
+
+        button:hover {
+            background-color: #c7c7c7;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0 0 0 20px;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        section {
+            margin: 20px 0;
+            padding: 0 20px;
+        }
+
+        .btn {
+            flex: 0 0 auto;
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #fff;
+            line-height: 25px;
+            vertical-align: top;
+            background-color: #4CAF50;
+            font-weight: normal;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script th:inline="javascript">
+        window.addEventListener('DOMContentLoaded', function() {
+            var uiMenu = document.querySelector('.ui-menu');
+            fetch('/menu')
+                .then(function(response) {
+                    return response.text();
+                })
+                .then(function(html) {
+                    uiMenu.innerHTML = html;
+                    var scripts = uiMenu.getElementsByClassName("runNow");
+                    for (var i = 0; i < scripts.length; i++) {
+                        eval(scripts[i].innerHTML);
+                    }
+                })
+                .catch(function(error) {
+                    console.log('뷰를 가져오는 동안 오류가 발생했습니다:', error);
+                });
+        });
+
+        async function logout() {
+            try {
+                const token = getCookie("token");
+                const response = await fetch('/user/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': "Bearer " + token
+                    }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert("로그아웃에 성공했습니다!");
+                    console.log(location.href);
+                    location.href = "/";
+                } else {
+                    console.log(result);
+                    alert("로그아웃에 실패했습니다.\n잠시 후 다시 시도해주세요.");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function getCookie(name) {
+            const cookieName = name + "=";
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.indexOf(cookieName) === 0) {
+                    return cookie.substring(cookieName.length, cookie.length);
+                }
+            }
+            return null;
+        }
+    </script>
+
+</head>
+<body>
+<div class="ui-menu"></div>
+<header><h1>메인 페이지</h1></header>
+<section>
+    <h2>핵심 콘텐츠</h2>
+    <!-- 핵심 콘텐츠 내용 추가 -->
+</section>
+
+<section>
+    <h2>소셜 미디어 연동</h2>
+    <!-- 소셜 미디어 연동 내용 추가 -->
+</section>
+
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>상품 수정 페이지</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 1em;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 20px 0;
+            display: inline-block;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .title_area {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .button_upload {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #selected-files {
+            margin-top: 10px;
+        }
+
+        .max-size-image {
+            max-width: 300px;
+            max-height: 300px;
+        }
+
+        footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 1em;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .footword {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<header><h1>상품/옵션 수정</h1></header>
+<form id="productForm">
+    <input type="hidden" name="id" th:value="${product.getId()}">
+
+    <label for="selectedCategory1">대분류 카테고리 선택:</label>
+    <select id="selectedCategory1" name="superCategory_id" onchange="callSons('selectedCategory1','selectedCategory2')" required>
+        <option value="0">없음</option>
+        <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.categoryName}"></option>
+    </select><br>
+
+    <!-- 카테고리 목록 콤보 박스 -->
+    <label for="selectedCategory2">중분류 카테고리 선택:</label>
+    <select id="selectedCategory2" name="superCategory_id" onchange="callSons('selectedCategory2','selectedCategory3')" required>
+        <option value="0">없음</option>
+    </select><br>
+
+    <!-- 카테고리 목록 콤보 박스 -->
+    <label for="selectedCategory3">소분류 카테고리 선택:</label>
+    <select id="selectedCategory3" name="superCategory_id" onchange="setInputValue()" required>
+        <option value="0">없음</option>
+    </select><br>
+
+    <input type="hidden" id="categoryId" name="categoryId" required>
+
+    <label for="productName">상품명:</label><br>
+    <input type="text" id="productName" name="productName" th:value="${product.getProductName()}" required><br>
+
+    <div class="form-group">
+        <div class="title_area">
+            <label>첨부 파일</label>
+        </div>
+        <div class="option_area">
+            <label class="button_upload">
+                <span class="blind"></span>
+                <input class="blind" type="file" id="files" name="files" accept="image/*" multiple onchange="updateSelectedFiles(event)">
+            </label>
+            <div id="selected-files">
+                <!--사진 나옴-->
+            </div>
+        </div>
+    </div>
+
+    <label for="productDescription">상품 설명:</label><br>
+    <textarea id="productDescription" name="description" th:text="${product.getDescription()}" required></textarea><br>
+
+    <label for="productPrice">상품 가격:</label><br>
+    <input type="number" id="productPrice" name="price" th:value="${product.getPrice()}" required><br>
+
+    <label for="deliveryFee">배송비:</label><br>
+    <input type="number" id="deliveryFee" name="deliveryFee" th:value="${product.getDeliveryFee()}" required><br>
+
+    <button type="button" id="saveProductButton" onclick="sendProduct()">상품 수정</button>
+</form>
+
+<form id="optionForm">
+    <h2>상품 옵션 수정</h2>
+    <input type="hidden" name="productId" th:value="${product.getId()}" required>
+
+    <label for="optionId">옵션명:</label>
+    <select id="optionId" name="id" onchange="setOption()" required>
+        <option value="0">없음</option>
+        <option th:each="option, index: ${product.getOptionList()}" th:value="${option.id}" th:text="${option.getOptionName()}" th:data-idx="${index.index}"></option>
+    </select><br>
+
+    <label for="optionName">수정된 옵션명:</label>
+    <input type="text" id="optionName" name="optionName" required><br>
+
+    <label for="optionPrice">옵션 추가 가격:</label><br>
+    <input type="number" id="optionPrice" name="price" required><br>
+
+    <label for="stockQuantity">재고 수량:</label><br>
+    <input type="number" id="stockQuantity" name="stockQuantity" required><br>
+
+    <button type="button" id="updateOptionButton" onclick="updateOption()">옵션 수정</button>
+    <button type="button" id="deleteOptionButton" onclick="deleteOption()">옵션 삭제</button>
+
+</form>
+
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+<script th:inline="javascript">
+    function updateSelectedFiles(event) {
+        for (var image of event.target.files) {
+            var reader = new FileReader();
+
+            reader.onload = function(event) {
+                var img = document.createElement("img");
+                img.setAttribute("src", event.target.result);
+                img.classList.add("max-size-image");
+
+                document.querySelector("#selected-files").appendChild(img);
+                console.log(img);
+            };
+
+            console.log(image);
+            reader.readAsDataURL(image);
+        }
+    }
+
+    // 상품 저장 함수
+    async function sendProduct() {
+        const form = document.getElementById('productForm');
+        const formData = new FormData(form);
+        const token = getCookie("token");
+
+        for (let entry of formData.entries()) {
+            console.log(entry[0] + ': ' + entry[1]);
+        }
+
+        try {
+            const response = await fetch('/product/update', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                console.log(result)
+                alert("상품이 성공적으로 수정되었습니다.");
+            } else {
+                console.log(result);
+                alert("상품 수정에 실패하였습니다");
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    function getCookie(name) {
+        var cookieName = name + "=";
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.indexOf(cookieName) === 0) {
+                return cookie.substring(cookieName.length, cookie.length);
+            }
+        }
+        return null;
+    }
+
+    async function setOption() {
+        const product = [[${product}]];
+        const optionSelect = document.getElementById('optionId');
+        var selectedOption = optionSelect.options[optionSelect.selectedIndex];
+        var idx = selectedOption.getAttribute('data-idx');
+        console.log(product, idx);
+        document.getElementById('optionName').value = product.optionList[idx].optionName;
+        document.getElementById('optionPrice').value = product.optionList[idx].price;
+        document.getElementById('stockQuantity').value = product.optionList[idx].stockQuantity;
+    }
+
+    async function updateOption() {
+        const form = document.getElementById('optionForm');
+        const formData = new FormData(form);
+        const optionData = {
+            id : form.elements['id'].value,
+            productId : form.elements['productId'].value,
+            optionName : form.elements['optionName'].value,
+            price : form.elements['price'].value,
+            stockQuantity : form.elements['stockQuantity'].value
+        };
+        const token = getCookie("token");
+
+        try {
+            const response = await fetch(`/options/update`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                alert("옵션이 성공적으로 수정되었습니다.");
+            } else {
+                console.log(result);
+                alert("상품 수정에 실패하였습니다.");
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+
+    async function deleteOption() {
+        const form = document.getElementById('optionForm');
+        const formData = new FormData(form);
+        const optionId = formData.get('id');
+
+        const optionData = {
+            id : form.elements['id'].value,
+            productId : form.elements['productId'].value,
+            optionName : form.elements['optionName'].value,
+            price : form.elements['price'].value,
+            stockQuantity : form.elements['stockQuantity'].value
+        };
+        const token = getCookie("token");
+
+        try {
+            const response = await fetch(`/options/delete/${optionId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                alert("옵션이 성공적으로 삭제되었습니다.");
+            } else {
+                console.log(result);
+                alert("옵션 삭제에 실패하였습니다.");
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    //-------------------카테고리-----------------//
+    function setInputValue() {
+        const selectElement = document.getElementById("selectedCategory3");
+        let selectedName = selectElement.options[selectElement.selectedIndex].value;
+        if (selectedName === "없음") {selectedName = ""}
+        document.getElementById("categoryId").value = selectedName;
+    }
+
+    async function callSons(tag1, tag2) {
+        const option1 = document.getElementById(tag1);
+        const option2 = document.getElementById(tag2);
+        const selectedOption = option1.value;
+
+        if (selectedOption !== "0") {
+            // AJAX 요청 보내기
+            try{
+                const response = await fetch('/category/son/' + selectedOption, {
+                    method: 'GET'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(result.response);
+                    option2.innerHTML = '<option value="0">없음</option>';
+                    const sons = result.response;
+                    for (const par in sons) {
+                        const sub = sons[par];
+                        console.log(sub);
+                        option2.innerHTML += '<option value="' + sub.id + '">' + sub.categoryName + '</option>';
+                    }
+                } else {
+                    console.log(result);
+                    alert("없는 카테고리를 선택");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        } else {
+            setInputValue(tag1);
+            document.getElementById("selectedCategory3").innerHTML = '<option value="0">없음</option>';
+            if (tag1 === "selectedCategory1") {
+                document.getElementById("selectedCategory2").innerHTML = '<option value="0">없음</option>';
+            }
+        }
+    }
+
+</script>
+</body>
+</html>

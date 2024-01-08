@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Join Form</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background-color:#ccc;
+            color: black;
+            padding: 5px 20px;
+        }
+
+        h1 {
+            margin: 20px 0;
+            font-size: 24px;
+        }
+
+        footer {
+            display: flex;
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            text-align: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footword{
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .btn {
+            flex: 0 0 auto;
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 5px;
+            color: #fff;
+            line-height: 25px;
+            vertical-align: top;
+            background-color: #4CAF50;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .form-container {
+            margin: 50px auto;
+            display: flex;
+            flex-direction: column;
+            max-width: 400px;
+            height: 100%;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            flex-wrap: nowrap;
+            align-content: space-around;
+            justify-content: space-between;
+            align-items: stretch;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-container label {
+          font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .form-container input[type="email"],
+        .form-container input[type="password"],
+        .form-container input[type="text"] {
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        .form-container input[type="submit"] {
+        }
+
+        .col {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .col p {
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('joinForm');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const username = document.getElementById('name').value;
+                const phoneNumber = document.getElementById('phoneNumber').value;
+                const address = document.getElementById('address').value;
+                const refresh_token = "-";
+
+                const data = {
+                    email,
+                    password,
+                    username,
+                    phoneNumber,
+                    address,
+                    refresh_token
+                };
+
+                try {
+                    const response = await fetch('/user/join', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert("회원가입에 성공했습니다!");
+                        console.log(location.href);
+                        location.href = '/login';
+                    } else {
+                        alert("Error: " + result.error.message);
+                    }
+
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+    </script>
+
+</head>
+<body>
+
+<header><h1>회원가입</h1></header>
+
+<div class="form-container">
+    <div>
+        <form id="joinForm">
+            <label for="email">이메일:</label>
+            <input type="email" id="email" name="email" required><br><br>
+
+            <label for="password">비밀번호:</label>
+            <input type="password" id="password" name="password" required><br><br>
+
+            <label for="name">이름:</label>
+            <input type="text" id="name" name="name" required><br><br>
+
+            <label for="phoneNumber">전화번호:</label>
+            <input type="text" id="phoneNumber" name="phoneNumber" required><br><br>
+
+            <label for="address">주소지:</label>
+            <input type="text" id="address" name="address" required><br><br>
+
+            <input type="submit" class="btn" value="회원가입 하시겠습니까?">
+            <footer>
+                <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+            </footer>
+        </form>
+    </div>
+
+</div>
+
+</body>
+</html>

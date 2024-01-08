@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>장바구니 페이지</title>
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+    <style>
+        header {
+            background-color:#ccc;
+            color: black;
+            padding: 20px;
+            text-align: center;
+        }
+
+        footer {
+            display: flex;
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            text-align: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footword{
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+    <script th:inline="javascript">
+        // JavaScript 코드는 그대로 유지됩니다.
+        window.addEventListener('DOMContentLoaded', function() {
+            var uiMenu = document.querySelector('.ui-menu');
+            fetch('/menu')
+                .then(function(response) {
+                    return response.text();
+                })
+                .then(function(html) {
+                    uiMenu.innerHTML = html;
+                    var scripts = uiMenu.getElementsByClassName("runNow");
+                    for (var i = 0; i < scripts.length; i++) {
+                        eval(scripts[i].innerHTML);
+                    }
+                })
+                .catch(function(error) {
+                    console.log('뷰를 가져오는 동안 오류가 발생했습니다:', error);
+                });
+        });
+
+        async function logout() {
+            try {
+                const token = getCookie("token");
+                const response = await fetch('/user/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': "Bearer " + token
+                    }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alert("로그아웃에 성공했습니다!");
+                    console.log(location.href);
+                    location.href = "/";
+                } else {
+                    console.log(result);
+                    alert("로그아웃에 실패했습니다.\n잠시 후 다시 시도해주세요.");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function getCookie(name) {
+            const cookieName = name + "=";
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.indexOf(cookieName) === 0) {
+                    return cookie.substring(cookieName.length, cookie.length);
+                }
+            }
+            return null;
+        }
+    </script>
+</head>
+<body>
+<div class="ui-menu"></div>
+
+<header><h1>장바구니</h1></header>
+<div class="container">
+    <div id="cart-list">
+    </div>
+
+    <div class="text-right">
+        <h5>총 금액: <div id="totalPrice"></div></h5>
+    </div>
+    <div class="text-right">
+        <button type="button" id="checkoutButton" class="btn btn-primary">결제하기</button>
+    </div>
+</div>
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+<script th:inline="javascript">
+    (async function() {
+        await cartList();
+    })();
+
+    async function cartList() {
+        const token = getCookie("token");
+        await $.ajax({
+            type: "get",
+            url: "/cart/myCart",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token
+            },
+            success: function (res) {
+                console.log(res);
+                let products = res.response.products;
+                let output = "";
+                let totalPrice = 0;
+                let row = 0;
+                if (products.length > 0) {
+                    output += "<div>";
+                    output += "<table class='table table-striped' id='cartTable'>";
+                    output += "<tr>";
+                    output += "<th>" + "상품명" + "</th>";
+                    output += "<th>" + "옵션명" + "</th>";
+                    output += "<th>" + "수량" + "</th>";
+                    output += "<th>" + "가격" + "</th>";
+                    output += "<th>" + "배송비" + "</th>";
+                    output += "<th>" + "최종 가격" + "</th>";
+                    output += "<th>" + "수정/취소" + "</th>";
+                    output += "</tr>";
+
+                    for (let i in products){
+                        let carts = products[i].cartDtos;
+                        for (let j in carts) {
+                            output += "<tr>";
+                            output += "<td>" + products[i].productName + "</td>";
+                            output += "<td>" + carts[j].optionDto.optionName + "</td>";
+
+                            output += "<td>" + carts[j].quantity;
+                            output += "<input type='number' min='1' value='" + carts[j].quantity + "' class='new-quantity' id='cart" + carts[j].id + "' style='display: none;'>";
+                            output += "<button class='quantity-update-button' onclick='updateCart(" + carts[j].id + ")' style='display: none;'>수량수정</button>";
+                            output += "</td>";
+
+                            output += "<td>" + carts[j].price + "</td>";
+                            output += "<td>" + products[i].deliveryFee + "</td>";
+                            output += "<td>" + (carts[j].price + products[i].deliveryFee) + "</td>";
+
+                            output += "<td>";
+                            output += "<button class='update' data-row='" + row + "'>수정</button>";
+                            output += "<button class='delete' data-id='" + carts[j].id + "' data-num='" + carts[j].quantity + "'>삭제</button>";
+                            output += "</td>";
+                            output += "</tr>";
+
+                            totalPrice += (carts[j].price + products[i].deliveryFee);
+                            row++;
+                        }
+                    }
+                    output += "</table>";
+                    output += "</div>";
+                }
+                document.getElementById('cart-list').innerHTML = output;
+                document.getElementById('totalPrice').textContent = totalPrice.toString();
+
+                const showUpdateBox = document.querySelectorAll('.update');
+                const deleteButton = document.querySelectorAll('.delete');
+
+                showUpdateBox.forEach(button => {
+                    button.addEventListener("click", function () {
+                       const row = this.dataset.row;
+                       const rr = parseInt(row) + 1;
+                       const table = document.getElementsByClassName('table')[0];
+                       const selectCell = table.rows.item(rr).cells[2];
+
+                       const updateInput = selectCell.querySelector('.new-quantity');
+                       const updateButton = selectCell.querySelector('.quantity-update-button');
+                       if (updateInput.style.display === 'none') {
+                           updateInput.style.display = 'block';
+                           updateButton.style.display = 'block';
+                       } else {
+                           updateInput.style.display = 'none';
+                           updateButton.style.display = 'none';
+                       }
+                    });
+                });
+
+                deleteButton.forEach(button => {
+                    button.addEventListener("click", function() {
+                        const id = this.dataset.id;
+                        const quantity = this.dataset.num;
+                        deleteCart(id, quantity);
+                    });
+                });
+            },
+            error: function (err) {
+                console.log("화면 이동 실패", err);
+                console.log(location.href);
+                location.href = "/";
+            }
+        });
+    }
+
+    function getCookie(name) {
+        const cookieName = name + "=";
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.indexOf(cookieName) === 0) {
+                return cookie.substring(cookieName.length, cookie.length);
+            }
+        }
+        return null;
+    }
+
+    const deleteCart = (id, quantity) => {
+        const token = getCookie('token');
+        const reqData = [{
+            cartId: parseInt(id),
+            quantity: parseInt(quantity)
+        }];
+        console.log(JSON.stringify(reqData));
+        $.ajax({
+            type: "post",
+            url: "/cart/delete",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token
+            },
+            data: JSON.stringify(reqData),
+            success: function (res) {
+                console.log("요청성공", res);
+                cartList();
+            },
+            error: function (err) {
+                console.log("요청실패", err);
+                alert("삭제 실패");
+            }
+        });
+    }
+
+    const updateCart = (id) => {
+        const token = getCookie('token');
+        const quantity = document.getElementById("cart" + id).value
+        const reqData = {
+            cartId: id,
+            quantity: quantity
+        };
+        $.ajax({
+            // 요청방식: post, 요청주소: /comment/update, 요청데이터: 작성자, 작성내용, 게시글번호
+            type: "post",
+            url: "/cart/update",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token
+            },
+            data: JSON.stringify(reqData),
+            success: function (res) {
+                console.log("요청승인", res);
+                cartList();
+            },
+            error: function (err) {
+                console.log("요청실패", err);
+                alert("수정 실패");
+            }
+        });
+    }
+    // 주문하기 버튼 클릭 시 주문 생성 요청 보내기 (주문 생성 성공 시 장바구니 비우기)
+    $('#checkoutButton').click(function () {
+        const token = getCookie('token');
+        $.ajax({
+            type: "post",
+            url: "/orders/save",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token
+            },
+            success: function (res) {
+                console.log("요청성공", res.response);
+                alert("주문생성이 완료되었습니다.");
+                location.href = "/v1/" + res.response.id;
+            },
+            error: function (err) {
+                console.log("요청실패", err);
+                alert("주문생성 실패");
+            }
+        });
+    });
+</script>
+</body>
+</html>

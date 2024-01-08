@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>카테고리 수정</title>
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background-color:#ccc;
+            color: black;
+            padding: 5px 20px;
+        }
+
+        h1 {
+            margin: 20px 0;
+            font-size: 24px;
+        }
+
+        footer {
+            display: flex;
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            text-align: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footword{
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 추가한 스타일 */
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            padding: 5px;
+            width: 200px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            margin-right: 10px;
+            padding: 4px 14px;
+            border-radius: 5px;
+            color: #fff;
+            line-height: 25px;
+            vertical-align: top;
+            background-color: #4CAF50;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<!-- 카테고리 수정/삭제 화면 -->
+<header>
+    <h1>카테고리 수정 / 삭제</h1>
+</header>
+
+<div class="form-container">
+    <!-- 대분류 카테고리 선택 -->
+    <label for="selectedCategory1">대분류 카테고리 선택:
+    <select id="selectedCategory1" name="superCategory_id" onchange="callSons('selectedCategory1','selectedCategory2')" required>
+        <option value="0">없음</option>
+        <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.categoryName}"></option>
+    </select>
+    </label><br>
+
+    <!-- 중분류 카테고리 선택 -->
+    <label for="selectedCategory2">중분류 카테고리 선택:
+    <select id="selectedCategory2" name="superCategory_id" onchange="callSons('selectedCategory2','selectedCategory3')">
+        <option value="0">없음</option>
+    </select>
+    </label><br>
+
+    <!-- 소분류 카테고리 선택 -->
+    <label for="selectedCategory3">소분류 카테고리 선택:
+    <select id="selectedCategory3" name="superCategory_id" onchange="setInputValue('selectedCategory3')">
+        <option value="0">없음</option>
+    </select>
+    </label><br>
+
+    <!-- 이름 수정 입력 -->
+    <label>이름 수정 :
+    <input type="text" id="selectedValueInput" required><br>
+    </label>
+    <!-- 수정 / 삭제 버튼 -->
+    <button onclick="updateCategory()">수정</button>
+    <button onclick="deleteCategory()">삭제</button>
+</div>
+
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+
+<script th:inline="javascript">
+    function setInputValue(tag) {
+        const selectElement = document.getElementById(tag);
+        let selectedName = selectElement.options[selectElement.selectedIndex].text;
+        if (selectedName === "없음") {selectedName = ""}
+        document.getElementById("selectedValueInput").value = selectedName;
+    }
+
+    async function callSons(tag1, tag2) {
+        const option1 = document.getElementById(tag1);
+        const option2 = document.getElementById(tag2);
+        const selectedOption = option1.value;
+
+        if (selectedOption !== "0") {
+            // AJAX 요청 보내기
+            try{
+                const response = await fetch('/category/son/' + selectedOption, {
+                    method: 'GET'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log(result.response);
+                    option2.innerHTML = '<option value="0">없음</option>';
+                    var sons = result.response;
+                    for (var par in sons) {
+                        var sub = sons[par];
+                        console.log(sub);
+                        option2.innerHTML += '<option value="' + sub.id + '">' + sub.categoryName + '</option>';
+                    }
+                    setInputValue(tag1);
+                } else {
+                    console.log(result);
+                    alert("없는 카테고리를 선택");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        } else {
+            setInputValue(tag1);
+            document.getElementById("selectedCategory3").innerHTML = '<option value="0">없음</option>';
+            if (tag1 === "selectedCategory1") {
+                document.getElementById("selectedCategory2").innerHTML = '<option value="0">없음</option>';
+            }
+        }
+    }
+
+    const updateCategory = () => {
+        const option1 = document.getElementById("selectedCategory1");
+        const option2 = document.getElementById("selectedCategory2");
+        const option3 = document.getElementById("selectedCategory3");
+        const selectedOption1 = option1.value;
+        const selectedOption2 = option2.value;
+        const selectedOption3 = option3.value;
+
+        let categoryId = selectedOption3;
+
+        if (selectedOption3 === "0") {
+            categoryId = selectedOption2;
+        }
+        if (selectedOption2 === "0") {
+            categoryId = selectedOption1;
+        }
+        if (categoryId === "0") {
+            alert("분류를 선택해 주십시오");
+            return 0;
+        }
+
+        try {
+            const categoryName = document.getElementById("selectedValueInput").value;
+            const token = getCookie("token");
+
+            $.ajax({
+                // 요청방식: post, 요청주소: /category/save, 요청데이터: 카테고리 id, 이름, 상위 id
+                type: "post",
+                url: "/category/update",
+                headers: {
+                    "Authorization": "Bearer " + token
+                },
+                data: {
+                    "id" : categoryId,
+                    "categoryName" : categoryName
+                },
+                success: function (res) {
+                    alert("카테고리 수정 완료");
+                    console.log(location.href);
+                    location.href = "/categoryUpdate";
+                },
+                error: function (err) {
+                    alert("카테고리 수정 실패");
+                    console.log("요청실패", err);
+                }
+            });
+        } catch (error) {
+            console.log('Error: ', error);
+        }
+    }
+
+    function deleteCategory() {
+        const option1 = document.getElementById("selectedCategory1");
+        const option2 = document.getElementById("selectedCategory2");
+        const option3 = document.getElementById("selectedCategory3");
+        const selectedOption1 = option1.value;
+        const selectedOption2 = option2.value;
+        const selectedOption3 = option3.value;
+
+        const token = getCookie("token");
+
+        let categoryId = selectedOption3;
+
+        if (selectedOption3 === "0") {
+            categoryId = selectedOption2;
+        }
+        if (selectedOption2 === "0") {
+            categoryId = selectedOption1;
+        }
+        if (categoryId === "0") {
+            alert("분류를 선택해 주십시오");
+            return 0;
+        }
+
+        $.ajax({
+            // 요청방식: post, 요청주소: /category/delete/{id}
+            type: "post",
+            url: '/category/delete/' + categoryId,
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+            success: function (res) {
+                alert("카테고리 삭제 완료");
+                console.log(location.href);
+                location.href = "/categoryUpdate";
+            },
+            error: function (err) {
+                alert("카테고리 삭제 실패");
+                console.log("요청실패", err);
+            }
+        });
+    }
+
+    function getCookie(name) {
+        const cookieName = name + "=";
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.indexOf(cookieName) === 0) {
+                return cookie.substring(cookieName.length, cookie.length);
+            }
+        }
+        return null;
+    }
+</script>
+</body>
+</html>

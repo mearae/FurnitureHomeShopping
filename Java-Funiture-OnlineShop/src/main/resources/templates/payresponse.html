@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nicepay spring-boot</title>
+    <meta httpEquiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+
+<body>
+<header> <h1>주문 확인</h1> </header>
+
+<h3 th:text="${resultMsg}"></h3>
+<p>결제 결과</p>
+<button onclick="location.href='/'">홈으로</button>
+
+<footer>
+    <p class="footword">&copy; 2023 My Website. All rights reserved.</p>
+</footer>
+</body>
+
+</html>
