@@ -5,7 +5,7 @@
 팀원 - 이아현, 배준혁, 홍주형
 
 ### ERD
-![Pasted image 20231214101018](attachments/Pasted%20image%2020231214101018.png)
+![image](https://github.com/mearae/FurnitureHomeShopping/assets/80160905/b5cc401a-ee09-4de4-a22b-1349d03cbf17)
 
 ## ⚙️ 개발환경
 
